@@ -17,18 +17,9 @@ export class DatabaseConnection implements IDatabaseConnection {
 	}
 
 	generateUri(): string {
-		return (
-			'mongodb://' +
-			this.configService.get('MONGO_LOGIN') +
-			':' +
-			this.configService.get('MONGO_PASSWORD') +
-			'@' +
-			this.configService.get('MONGO_HOST') +
-			':' +
-			this.configService.get('MONGO_PORT') +
-			'/' +
-			this.configService.get('MONGO_AUTHDATABASE')
-		);
+		return `mongodb+srv://${this.configService.get('MONGO_LOGIN')}:${this.configService.get(
+			'MONGO_PASSWORD',
+		)}@cluster0.x7madcf.mongodb.net/?retryWrites=true&w=majority`;
 	}
 
 	async getConnection() {
