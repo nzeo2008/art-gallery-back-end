@@ -33,7 +33,7 @@ export class App {
 		private readonly exhibitionsController: IExhibitionsController,
 		@inject(TYPES.ConfigService) private readonly configService: IConfigService,
 	) {
-		this.port = 3001;
+		this.port = Number(this.configService.get('CONNECTION_PORT')) || 3001;
 		this.app = express();
 		this.logger = logger;
 	}
