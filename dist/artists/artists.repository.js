@@ -20,9 +20,8 @@ const artist_model_1 = require("./artist.model");
 const inversify_1 = require("inversify");
 require("reflect-metadata");
 let ArtistsRepository = class ArtistsRepository {
-    createArtistBody(body, paths) {
-        const artist = Object.assign(Object.assign({}, body), { artworks: paths });
-        return artist_model_1.artistModel.create(artist);
+    createArtistBody(body) {
+        return artist_model_1.artistModel.create(body);
     }
     findArtistBodyById(id) {
         return artist_model_1.artistModel.findById(id).exec();
@@ -38,6 +37,24 @@ let ArtistsRepository = class ArtistsRepository {
             return artist_model_1.artistModel
                 .find({
                 name: { $regex: `${name}` },
+            })
+                .exec();
+        });
+    }
+    findArtistsBodyByCategory(category) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return artist_model_1.artistModel
+                .find({
+                category,
+            })
+                .exec();
+        });
+    }
+    findArtistsBodyByTags(tags) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return artist_model_1.artistModel
+                .find({
+                tags,
             })
                 .exec();
         });

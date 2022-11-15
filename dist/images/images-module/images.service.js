@@ -21,26 +21,29 @@ const fs_extra_1 = require("fs-extra");
 const app_root_path_1 = require("app-root-path");
 require("reflect-metadata");
 let ImagesService = class ImagesService {
+    constructor() {
+        this.basePath = `${app_root_path_1.path}/src/images/images-folder/`;
+    }
     saveEventsImages(body, files, from) {
         return __awaiter(this, void 0, void 0, function* () {
-            const uploadFolder = `${app_root_path_1.path}/src/images/images-folder/${from}/${body.alias}`;
+            const uploadFolder = this.basePath + `${from}/${body.alias}`;
             yield (0, fs_extra_1.ensureDir)(uploadFolder);
             const result = [];
             for (const file of files) {
                 yield (0, fs_extra_1.writeFile)(`${uploadFolder}/${file.originalname}`, file.buffer);
-                result.push(`${uploadFolder}/${file.originalname}`);
+                result.push(`${from}/${body.alias}/${file.originalname}`);
             }
             return result;
         });
     }
     saveExhibitionsImages(body, files, from) {
         return __awaiter(this, void 0, void 0, function* () {
-            const uploadFolder = `${app_root_path_1.path}/src/images/images-folder/${from}/${body.alias}`;
+            const uploadFolder = this.basePath + `${from}/${body.alias}`;
             yield (0, fs_extra_1.ensureDir)(uploadFolder);
             const result = [];
             for (const file of files) {
                 yield (0, fs_extra_1.writeFile)(`${uploadFolder}/${file.originalname}`, file.buffer);
-                result.push(`${uploadFolder}/${file.originalname}`);
+                result.push(`${from}/${body.alias}/${file.originalname}`);
             }
             return result;
         });
@@ -48,26 +51,37 @@ let ImagesService = class ImagesService {
     saveArtistsImages(body, files, from) {
         return __awaiter(this, void 0, void 0, function* () {
             const fullname = body.name + body.surname + `(${body.nickname})`;
-            const uploadFolder = `${app_root_path_1.path}\\src\\images\\images-folder\\${from}\\${fullname}`;
+            const uploadFolder = this.basePath + `${from}/${fullname}`;
             yield (0, fs_extra_1.ensureDir)(uploadFolder);
-            const result = [];
+            const images = [];
+            let avatar = '';
             for (const file of files) {
-                yield (0, fs_extra_1.writeFile)(`${uploadFolder}\\${file.originalname}`, file.buffer);
-                result.push(`${uploadFolder}\\${file.originalname}`);
+                if (file.originalname.replace(/\.[^/.]+$/, '').toLowerCase() === 'avatar') {
+                    yield (0, fs_extra_1.ensureDir)(`${uploadFolder}/Avatar/`);
+                    yield (0, fs_extra_1.writeFile)(`${uploadFolder}/Avatar/${file.originalname}`, file.buffer);
+                    avatar = `${from}/${fullname}/Avatar/${file.originalname}`;
+                }
+                else {
+                    yield (0, fs_extra_1.writeFile)(`${uploadFolder}/${file.originalname}`, file.buffer);
+                    images.push(`${from}/${fullname}/${file.originalname}`);
+                }
             }
-            return result;
+            return { avatar: avatar, images: images };
         });
     }
     deleteImagesFolder(images) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!images || images.length === 0)
                 return false;
-            const indexOfString = images[0].lastIndexOf('\\');
-            const imagesFolder = images[0].substring(0, indexOfString);
-            (0, fs_extra_1.rmdir)(imagesFolder, (err) => {
-                return err.message;
-            });
-            return true;
+            const indexOfString = images[0].lastIndexOf('/');
+            const imagesFolder = this.basePath + images[0].substring(0, indexOfString);
+            try {
+                (0, fs_extra_1.rmSync)(imagesFolder, { recursive: true, force: true });
+                return true;
+            }
+            catch (error) {
+                return false;
+            }
         });
     }
 };

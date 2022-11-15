@@ -35,16 +35,7 @@ let DatabaseConnection = class DatabaseConnection {
         this._uri = this.generateUri();
     }
     generateUri() {
-        return ('mongodb://' +
-            this.configService.get('MONGO_LOGIN') +
-            ':' +
-            this.configService.get('MONGO_PASSWORD') +
-            '@' +
-            this.configService.get('MONGO_HOST') +
-            ':' +
-            this.configService.get('MONGO_PORT') +
-            '/' +
-            this.configService.get('MONGO_AUTHDATABASE'));
+        return `mongodb+srv://${this.configService.get('MONGO_LOGIN')}:${this.configService.get('MONGO_PASSWORD')}@cluster0.x7madcf.mongodb.net/?retryWrites=true&w=majority`;
     }
     getConnection() {
         return __awaiter(this, void 0, void 0, function* () {

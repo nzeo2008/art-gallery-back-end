@@ -19,10 +19,9 @@ exports.ExhibitionsRepository = void 0;
 const inversify_1 = require("inversify");
 const exhibition_model_1 = require("./exhibition.model");
 let ExhibitionsRepository = class ExhibitionsRepository {
-    createExhibitionPost(body, paths) {
+    createExhibitionPost(body) {
         return __awaiter(this, void 0, void 0, function* () {
-            const exhibition = Object.assign(Object.assign({}, body), { images: paths });
-            return exhibition_model_1.exhibitionModel.create(exhibition);
+            return exhibition_model_1.exhibitionModel.create(body);
         });
     }
     findExhibitionPostById(id) {
@@ -37,7 +36,19 @@ let ExhibitionsRepository = class ExhibitionsRepository {
     }
     findExhibitionPostByTitle(title) {
         return __awaiter(this, void 0, void 0, function* () {
-            return exhibition_model_1.exhibitionModel.find({ title: { $regex: `${title}` } }).exec();
+            return exhibition_model_1.exhibitionModel
+                .find({ title: { $regex: `${title}` } }, [], { sort: { startDate: -1 } })
+                .exec();
+        });
+    }
+    findExhibitionPostsByCategory(category) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return exhibition_model_1.exhibitionModel.find({ category }, [], { sort: { startDate: -1 } }).exec();
+        });
+    }
+    findExhibitionPostsByTags(tags) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return exhibition_model_1.exhibitionModel.find({ tags }, [], { sort: { startDate: -1 } }).exec();
         });
     }
     updateExhibitionPostById(id, dto) {

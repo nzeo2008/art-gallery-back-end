@@ -20,7 +20,7 @@ __decorate([
     __metadata("design:type", String)
 ], EventDto.prototype, "title", void 0);
 __decorate([
-    (0, class_validator_1.MaxLength)(1024, { message: 'Максимальное число знаков не может быть больше $constraint1' }),
+    (0, class_validator_1.MaxLength)(5024, { message: 'Максимальное число знаков не может быть больше $constraint1' }),
     (0, class_validator_1.MinLength)(30, { message: 'Минимальное число знаков не может быть меньше $constraint1' }),
     (0, class_validator_1.IsString)({ message: 'Неверный тип данных, требуется string' }),
     __metadata("design:type", String)

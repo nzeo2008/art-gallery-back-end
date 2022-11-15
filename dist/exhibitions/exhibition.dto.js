@@ -24,7 +24,11 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsDateString)('', { message: 'Неверный тип даты и времени' }),
     __metadata("design:type", Date)
-], ExhibitionDto.prototype, "date", void 0);
+], ExhibitionDto.prototype, "startDate", void 0);
+__decorate([
+    (0, class_validator_1.IsDateString)('', { message: 'Неверный тип даты и времени' }),
+    __metadata("design:type", Date)
+], ExhibitionDto.prototype, "endDate", void 0);
 __decorate([
     (0, class_validator_1.MaxLength)(30, { message: 'Максимальное число знаков не может быть больше $constraint1' }),
     (0, class_validator_1.MinLength)(2, { message: 'Минимальное число знаков не может быть меньше $constraint1' }),
@@ -32,23 +36,33 @@ __decorate([
     __metadata("design:type", String)
 ], ExhibitionDto.prototype, "city", void 0);
 __decorate([
-    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.ValidateIf)((e) => e !== ''),
     (0, class_validator_1.IsArray)({ message: 'Неверный тип данных, требуется массив' }),
     (0, class_validator_1.ValidateNested)({ each: true, message: 'Неверный тип DTO' }),
     (0, class_transformer_1.Type)(() => artist_dto_1.ArtistDto),
     __metadata("design:type", Array)
 ], ExhibitionDto.prototype, "artists", void 0);
 __decorate([
-    (0, class_validator_1.MaxLength)(1024, { message: 'Максимальное число знаков не может быть больше $constraint1' }),
+    (0, class_validator_1.MaxLength)(5024, { message: 'Максимальное число знаков не может быть больше $constraint1' }),
     (0, class_validator_1.MinLength)(30, { message: 'Минимальное число знаков не может быть меньше $constraint1' }),
     (0, class_validator_1.IsString)({ message: 'Неверный тип данных, требуется string' }),
     __metadata("design:type", String)
 ], ExhibitionDto.prototype, "description", void 0);
 __decorate([
-    (0, class_validator_1.ArrayMaxSize)(30, { message: 'Максимальное число элементов массива не может быть больше $constraint1' }),
-    (0, class_validator_1.ArrayMinSize)(1, { message: 'Минимальное число элементов массива не может быть меньше $constraint1' }),
-    (0, class_validator_1.MaxLength)(30, { each: true, message: 'Максимальное число знаков не может быть больше $constraint1' }),
-    (0, class_validator_1.MinLength)(1, { each: true, message: 'Минимальное число знаков не может быть меньше $constraint1' }),
+    (0, class_validator_1.ArrayMaxSize)(30, {
+        message: 'Максимальное число элементов массива не может быть больше $constraint1',
+    }),
+    (0, class_validator_1.ArrayMinSize)(1, {
+        message: 'Минимальное число элементов массива не может быть меньше $constraint1',
+    }),
+    (0, class_validator_1.MaxLength)(30, {
+        each: true,
+        message: 'Максимальное число знаков не может быть больше $constraint1',
+    }),
+    (0, class_validator_1.MinLength)(1, {
+        each: true,
+        message: 'Минимальное число знаков не может быть меньше $constraint1',
+    }),
     (0, class_validator_1.IsArray)({ message: 'Требуется массив' }),
     (0, class_validator_1.IsString)({ each: true, message: 'Неверный тип данных, требуется string' }),
     __metadata("design:type", Array)

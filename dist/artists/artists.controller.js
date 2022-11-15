@@ -44,30 +44,43 @@ const artist_dto_1 = require("./artist.dto");
 const auth_guard_1 = require("../middleware/auth.guard");
 require("reflect-metadata");
 let ArtistsController = class ArtistsController extends controller_1.Controller {
-    constructor(logger, artistsService) {
+    constructor(logger, artistsService, imagesController) {
         super(logger);
         this.artistsService = artistsService;
+        this.imagesController = imagesController;
         this.routes([
             {
-                path: '/createArtist',
+                path: '/create-artist',
                 method: 'post',
                 func: this.create,
                 validators: [new validator_1.Validator(artist_dto_1.ArtistDto), new auth_guard_1.AuthGuard()],
             },
             {
-                path: '/searchArtist',
+                path: '/search-artist',
                 method: 'get',
                 func: this.search,
                 validators: [],
             },
             {
-                path: '/updateArtist',
+                path: '/search-category',
+                method: 'get',
+                func: this.searchByCategory,
+                validators: [],
+            },
+            {
+                path: '/search-tags',
+                method: 'get',
+                func: this.searchByTags,
+                validators: [],
+            },
+            {
+                path: '/update-artist',
                 method: 'patch',
                 func: this.update,
                 validators: [new validator_1.Validator(artist_dto_1.ArtistDto), new auth_guard_1.AuthGuard()],
             },
             {
-                path: '/deleteArtist',
+                path: '/delete-artist',
                 method: 'delete',
                 func: this.delete,
                 validators: [new auth_guard_1.AuthGuard()],
@@ -77,12 +90,14 @@ let ArtistsController = class ArtistsController extends controller_1.Controller 
     create(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             if (req.files === undefined) {
-                return this.send(res, errors_constant_1.ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE, 'Не удалось загрузить изображения');
+                return this.send(res, errors_constant_1.ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.CREATE_ARTIST_ERROR);
             }
             const files = req.files;
-            const result = yield this.artistsService.createArtist(req.body, files);
+            const paths = yield this.imagesController.uploadImagesToArtists(req.body, files);
+            const body = Object.assign(Object.assign({}, req.body), paths);
+            const result = yield this.artistsService.createArtist(body);
             if (!result) {
-                return next((0, http_error_1.createNewError)('createArtist', errors_constant_1.ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.CREATE_ARTIST_ERROR));
+                return next((0, http_error_1.createNewError)('create-artist', errors_constant_1.ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.CREATE_ARTIST_ERROR));
             }
             this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.CREATED_STATUS_CODE, result);
         });
@@ -96,22 +111,67 @@ let ArtistsController = class ArtistsController extends controller_1.Controller 
             this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, artists);
         });
     }
-    update({ body }, res, next) {
+    searchByCategory({ query }, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { _id } = body, dto = __rest(body, ["_id"]);
-            const updatedArtist = yield this.artistsService.updateArtistById(_id, dto);
-            if (!updatedArtist) {
-                return next((0, http_error_1.createNewError)('updateEvent', errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.EVENT_NOT_FOUND_MESSAGE));
+            const artists = yield this.artistsService.findArtistsByCategory(query.category);
+            if (!artists) {
+                return this.send(res, errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_STATUS_CODE, null);
             }
+            this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, artists);
+        });
+    }
+    searchByTags({ query }, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const artists = yield this.artistsService.findArtistsByTags(query.tags);
+            if (!artists) {
+                return this.send(res, errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_STATUS_CODE, null);
+            }
+            this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, artists);
+        });
+    }
+    update(req, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (req.files === undefined) {
+                return this.send(res, errors_constant_1.ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.CREATE_IMAGES_ERROR);
+            }
+            const files = req.files;
+            const _a = req.body, { _id } = _a, dto = __rest(_a, ["_id"]);
+            const findArtistResult = yield this.artistsService.findArtistById(_id);
+            if (!findArtistResult) {
+                return next((0, http_error_1.createNewError)('update-artist', errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.ARTIST_NOT_FOUND_MESSAGE));
+            }
+            if (findArtistResult.images.length === 0 && files.length !== 0) {
+                const paths = yield this.imagesController.uploadImagesToArtists(req.body, files);
+                const artist = Object.assign(Object.assign({}, dto), paths);
+                const updatedArtist = yield this.artistsService.updateArtistById(_id, artist);
+                return this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, updatedArtist);
+            }
+            const result = yield this.imagesController.deleteImages(findArtistResult.images);
+            if (!result) {
+                return next((0, http_error_1.createNewError)('update-artist', errors_constant_1.ERROR_CONSTANTS.CONFLICT_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.DELETE_CONFLICT_MESSAGE));
+            }
+            const paths = yield this.imagesController.uploadImagesToArtists(req.body, files);
+            const artist = Object.assign(Object.assign({}, dto), paths);
+            const updatedArtist = yield this.artistsService.updateArtistById(_id, artist);
             this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, updatedArtist);
         });
     }
-    delete({ body }, res, next) {
+    delete({ query }, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
-            const deletedEvent = yield this.artistsService.deleteArtistById(body._id);
-            if (!deletedEvent) {
-                return next((0, http_error_1.createNewError)('deleteEvent', errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.EVENT_NOT_FOUND_MESSAGE));
+            const id = query._id;
+            const findArtist = yield this.artistsService.findArtistById(id);
+            if (!findArtist) {
+                return next((0, http_error_1.createNewError)('delete-artist', errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.ARTIST_NOT_FOUND_MESSAGE));
             }
+            if (findArtist.images.length === 0) {
+                yield this.artistsService.deleteArtistById(id);
+                return this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, {});
+            }
+            const result = yield this.imagesController.deleteImages(findArtist.images);
+            if (!result) {
+                return next((0, http_error_1.createNewError)('delete-artist', errors_constant_1.ERROR_CONSTANTS.CONFLICT_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.DELETE_CONFLICT_MESSAGE));
+            }
+            yield this.artistsService.deleteArtistById(id);
             this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, {});
         });
     }
@@ -120,6 +180,7 @@ ArtistsController = __decorate([
     (0, inversify_1.injectable)(),
     __param(0, (0, inversify_1.inject)(types_1.TYPES.LoggerService)),
     __param(1, (0, inversify_1.inject)(types_1.TYPES.ArtistsService)),
-    __metadata("design:paramtypes", [Object, Object])
+    __param(2, (0, inversify_1.inject)(types_1.TYPES.ImagesController)),
+    __metadata("design:paramtypes", [Object, Object, Object])
 ], ArtistsController);
 exports.ArtistsController = ArtistsController;

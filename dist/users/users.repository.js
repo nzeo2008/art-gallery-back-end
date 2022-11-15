@@ -34,6 +34,26 @@ let UsersRepository = class UsersRepository {
             return yield user_model_1.userModel.findOne({ email });
         });
     }
+    saveEventPostToUser(email, savedEvents) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return user_model_1.userModel.findOneAndUpdate({ email }, { $set: { savedEvents } }, { new: true }).exec();
+        });
+    }
+    deleteEventPostFromUser(email, savedEvents) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return user_model_1.userModel.findOneAndUpdate({ email }, { $set: { savedEvents } }, { new: true }).exec();
+        });
+    }
+    getUserDataFromDatabase(email) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return user_model_1.userModel.findOne({ email }, { savedEvents: 1, email: 1, name: 1, registerDate: 1 });
+        });
+    }
+    findEventPostByAliasFromUser(alias) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return user_model_1.userModel.findOne({ 'savedEvents.alias': alias }, { savedEvents: 1 }).exec();
+        });
+    }
 };
 UsersRepository = __decorate([
     (0, inversify_1.injectable)(),

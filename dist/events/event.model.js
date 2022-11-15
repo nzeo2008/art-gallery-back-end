@@ -22,7 +22,7 @@ __decorate([
     __metadata("design:type", String)
 ], EventModel.prototype, "article", void 0);
 __decorate([
-    (0, typegoose_1.prop)({ default: Date.now() }),
+    (0, typegoose_1.prop)({ default: new Date().toISOString() }),
     __metadata("design:type", Date)
 ], EventModel.prototype, "createdAt", void 0);
 __decorate([

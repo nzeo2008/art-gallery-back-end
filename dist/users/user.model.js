@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userModel = exports.UserModel = void 0;
 const typegoose_1 = require("@typegoose/typegoose");
+const event_model_1 = require("../events/event.model");
 class UserModel {
 }
 __decorate([
@@ -29,5 +30,13 @@ __decorate([
     (0, typegoose_1.prop)(),
     __metadata("design:type", Boolean)
 ], UserModel.prototype, "isAdmin", void 0);
+__decorate([
+    (0, typegoose_1.prop)({ type: () => [event_model_1.EventModel], default: [] }),
+    __metadata("design:type", Array)
+], UserModel.prototype, "savedEvents", void 0);
+__decorate([
+    (0, typegoose_1.prop)({ default: new Date().toISOString() }),
+    __metadata("design:type", Date)
+], UserModel.prototype, "registerDate", void 0);
 exports.UserModel = UserModel;
 exports.userModel = (0, typegoose_1.getModelForClass)(UserModel);

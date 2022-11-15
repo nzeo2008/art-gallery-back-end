@@ -55,6 +55,7 @@ const validator_1 = require("../middleware/validator");
 const user_login_dto_1 = require("./dto/user-login.dto");
 const statuscode_constants_1 = require("../common/statuscode.constants");
 require("reflect-metadata");
+const http_error_1 = require("../errors/http.error");
 let UsersController = class UsersController extends controller_1.Controller {
     constructor(logger, userService, configService) {
         super(logger);
@@ -86,6 +87,30 @@ let UsersController = class UsersController extends controller_1.Controller {
                 func: this.register,
                 validators: [new validator_1.Validator(user_register_dto_1.UserRegisterDto)],
             },
+            {
+                path: '/save-event-to-user',
+                method: 'patch',
+                func: this.saveEvent,
+                validators: [],
+            },
+            {
+                path: '/delete-event-from-user',
+                method: 'patch',
+                func: this.deleteEvent,
+                validators: [],
+            },
+            {
+                path: '/search-event-from-user',
+                method: 'get',
+                func: this.searchEvent,
+                validators: [],
+            },
+            {
+                path: '/get-user-data',
+                method: 'get',
+                func: this.getUser,
+                validators: [],
+            },
         ]);
     }
     login({ body }, res, next) {
@@ -105,10 +130,46 @@ let UsersController = class UsersController extends controller_1.Controller {
             const result = yield this.userService.createUser(body);
             if (!result) {
                 return next(res
-                    .status(errors_constant_1.ERROR_CONSTANTS.ALREADY_EXIST_STATUS_CODE)
+                    .status(errors_constant_1.ERROR_CONSTANTS.CONFLICT_STATUS_CODE)
                     .send(errors_constant_1.ERROR_CONSTANTS.ALREADY_EXIST_MESSAGE));
             }
             return this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.CREATED_STATUS_CODE, result);
+        });
+    }
+    saveEvent({ body }, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const result = this.userService.saveEventPost(body.email, body.event);
+            if (!result) {
+                return next((0, http_error_1.createNewError)('search-event-from-user', errors_constant_1.ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_MESSAGE));
+            }
+            this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, result);
+        });
+    }
+    deleteEvent({ body }, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const result = this.userService.deleteEventPost(body.email, body.alias);
+            if (!result) {
+                return next((0, http_error_1.createNewError)('delete-event-from-user', errors_constant_1.ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_MESSAGE));
+            }
+            this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, result);
+        });
+    }
+    searchEvent({ query }, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const result = yield this.userService.findEventPostByAlias(query.alias);
+            if (!result) {
+                return this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, null);
+            }
+            this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, result);
+        });
+    }
+    getUser({ query }, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const result = yield this.userService.getUserData(query.email);
+            if (!result) {
+                return this.send(res, errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_STATUS_CODE, null);
+            }
+            this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, result);
         });
     }
 };

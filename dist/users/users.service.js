@@ -45,6 +45,37 @@ let UsersService = class UsersService {
             return yield this.userRepository.find(email);
         });
     }
+    saveEventPost(email, event) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const result = yield this.findUser(email);
+            if (!result) {
+                return null;
+            }
+            const { savedEvents } = result;
+            savedEvents.push(...event);
+            return this.userRepository.saveEventPostToUser(email, savedEvents);
+        });
+    }
+    deleteEventPost(email, alias) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const result = yield this.findUser(email);
+            if (!result) {
+                return null;
+            }
+            const updatedEvents = result.savedEvents.filter((event) => event.alias !== alias);
+            return this.userRepository.saveEventPostToUser(email, updatedEvents);
+        });
+    }
+    findEventPostByAlias(alias) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.userRepository.findEventPostByAliasFromUser(alias);
+        });
+    }
+    getUserData(email) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.userRepository.getUserDataFromDatabase(email);
+        });
+    }
     validateUser({ email, password }) {
         return __awaiter(this, void 0, void 0, function* () {
             const userExist = yield this.findUser(email);

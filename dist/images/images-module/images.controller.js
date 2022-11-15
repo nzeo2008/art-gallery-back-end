@@ -56,11 +56,7 @@ let ImagesController = class ImagesController {
     }
     deleteImages(images) {
         return __awaiter(this, void 0, void 0, function* () {
-            const result = yield this.imagesService.deleteImagesFolder(images);
-            if (typeof result === 'boolean') {
-                return result;
-            }
-            this.loggerService.error(result);
+            return this.imagesService.deleteImagesFolder(images);
         });
     }
 };

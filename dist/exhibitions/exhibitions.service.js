@@ -25,18 +25,12 @@ exports.ExhibitionsService = void 0;
 const inversify_1 = require("inversify");
 const types_1 = require("../types");
 let ExhibitionsService = class ExhibitionsService {
-    constructor(exhibitionsRepository, imagesController) {
+    constructor(exhibitionsRepository) {
         this.exhibitionsRepository = exhibitionsRepository;
-        this.imagesController = imagesController;
     }
-    createExhibition(body, files) {
+    createExhibition(body) {
         return __awaiter(this, void 0, void 0, function* () {
-            const result = yield this.findExhibitionByAlias(body.alias);
-            const paths = yield this.imagesController.uploadImagesToExhibitions(body, files);
-            if (!result) {
-                return this.exhibitionsRepository.createExhibitionPost(body, paths);
-            }
-            return null;
+            return this.exhibitionsRepository.createExhibitionPost(body);
         });
     }
     findExhibitionById(id) {
@@ -54,6 +48,16 @@ let ExhibitionsService = class ExhibitionsService {
             return this.exhibitionsRepository.findExhibitionPostByTitle(title);
         });
     }
+    findExhibitionsByCategory(category) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.exhibitionsRepository.findExhibitionPostsByCategory(category);
+        });
+    }
+    findExhibitionsByTags(tags) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.exhibitionsRepository.findExhibitionPostsByTags(tags);
+        });
+    }
     updateExhibitionById(id, dto) {
         return __awaiter(this, void 0, void 0, function* () {
             return this.exhibitionsRepository.updateExhibitionPostById(id, dto);
@@ -68,7 +72,6 @@ let ExhibitionsService = class ExhibitionsService {
 ExhibitionsService = __decorate([
     (0, inversify_1.injectable)(),
     __param(0, (0, inversify_1.inject)(types_1.TYPES.ExhibitionsRepository)),
-    __param(1, (0, inversify_1.inject)(types_1.TYPES.ImagesController)),
-    __metadata("design:paramtypes", [Object, Object])
+    __metadata("design:paramtypes", [Object])
 ], ExhibitionsService);
 exports.ExhibitionsService = ExhibitionsService;

@@ -19,15 +19,14 @@ exports.EventsRepository = void 0;
 const event_model_1 = require("./event.model");
 const inversify_1 = require("inversify");
 let EventsRepository = class EventsRepository {
-    createEventPost(body, paths) {
+    createEventPost(body) {
         return __awaiter(this, void 0, void 0, function* () {
-            const event = Object.assign(Object.assign({}, body), { images: paths });
-            return event_model_1.eventModel.create(event);
+            return event_model_1.eventModel.create(body);
         });
     }
     findEventPostById(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            return event_model_1.eventModel.findById(id).exec();
+            return event_model_1.eventModel.findOne({ _id: id }).exec();
         });
     }
     findEventPostByAlias(alias) {
@@ -37,7 +36,14 @@ let EventsRepository = class EventsRepository {
     }
     findEventPostByTitle(title) {
         return __awaiter(this, void 0, void 0, function* () {
-            return event_model_1.eventModel.find({ title: { $regex: `${title}` } }).exec();
+            return event_model_1.eventModel
+                .find({ title: { $regex: `${title}` } }, [], { sort: { createdAt: -1 } })
+                .exec();
+        });
+    }
+    findEventPostsByCategory(category) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return event_model_1.eventModel.find({ category }, [], { sort: { createdAt: -1 } }).exec();
         });
     }
     updateEventPostById(id, dto) {

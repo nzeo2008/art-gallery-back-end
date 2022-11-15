@@ -50,25 +50,31 @@ let EventsController = class EventsController extends controller_1.Controller {
         this.imagesController = imagesController;
         this.routes([
             {
-                path: '/createEvent',
+                path: '/create-event',
                 method: 'post',
                 func: this.create,
                 validators: [new validator_1.Validator(event_dto_1.EventDto), new auth_guard_1.AuthGuard()],
             },
             {
-                path: '/searchEvent',
+                path: '/search-event',
                 method: 'get',
                 func: this.search,
                 validators: [],
             },
             {
-                path: '/updateEvent',
+                path: '/search-category',
+                method: 'get',
+                func: this.searchByCategory,
+                validators: [],
+            },
+            {
+                path: '/update-event',
                 method: 'patch',
                 func: this.update,
                 validators: [new validator_1.Validator(event_dto_1.EventDto), new auth_guard_1.AuthGuard()],
             },
             {
-                path: '/deleteEvent',
+                path: '/delete-event',
                 method: 'delete',
                 func: this.delete,
                 validators: [new auth_guard_1.AuthGuard()],
@@ -78,47 +84,84 @@ let EventsController = class EventsController extends controller_1.Controller {
     create(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             if (req.files === undefined) {
-                return this.send(res, errors_constant_1.ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE, 'Не удалось загрузить изображения');
+                return this.send(res, errors_constant_1.ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.CREATE_EVENT_ERROR);
             }
             const files = req.files;
-            const result = yield this.eventsService.createEvent(req.body, files);
+            const findResult = yield this.eventsService.findEventByAlias(req.body.alias);
+            if (findResult) {
+                return this.send(res, errors_constant_1.ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.EVENT_ALREADY_EXIST);
+            }
+            const paths = yield this.imagesController.uploadImagesToEvents(req.body, files);
+            const body = Object.assign(Object.assign({}, req.body), { images: paths });
+            const result = yield this.eventsService.createEvent(body);
             if (!result) {
-                return next((0, http_error_1.createNewError)('createEvent', errors_constant_1.ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.CREATE_EVENT_ERROR));
+                return next((0, http_error_1.createNewError)('create-event', errors_constant_1.ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.CREATE_EVENT_ERROR));
             }
             this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.CREATED_STATUS_CODE, result);
         });
     }
-    search({ body }, res, next) {
+    searchByCategory({ query }, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
-            const result = yield this.eventsService.findEventByTitle(body.title);
+            const result = yield this.eventsService.findEventsByCategory(query.category);
             if (!result) {
                 return this.send(res, errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_STATUS_CODE, null);
             }
             this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, result);
         });
     }
-    update({ body }, res, next) {
+    search({ query }, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { _id } = body, dto = __rest(body, ["_id"]);
-            const updatedEvent = yield this.eventsService.updateEventById(_id, dto);
-            if (!updatedEvent) {
-                return next((0, http_error_1.createNewError)('updateEvent', errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.EVENT_NOT_FOUND_MESSAGE));
+            const result = yield this.eventsService.findEventByTitle(query.title);
+            if (!result) {
+                return this.send(res, errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_STATUS_CODE, null);
             }
+            this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, result);
+        });
+    }
+    update(req, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (req.files === undefined) {
+                return this.send(res, errors_constant_1.ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.CREATE_IMAGES_ERROR);
+            }
+            const files = req.files;
+            const _a = req.body, { _id } = _a, dto = __rest(_a, ["_id"]);
+            const findEventResult = yield this.eventsService.findEventById(_id);
+            if (!findEventResult) {
+                return next((0, http_error_1.createNewError)('update-event', errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.EVENT_NOT_FOUND_MESSAGE));
+            }
+            if (findEventResult.images.length === 0 && files.length !== 0) {
+                const paths = yield this.imagesController.uploadImagesToEvents(req.body, files);
+                const event = Object.assign(Object.assign({}, dto), { images: paths });
+                const updatedEvent = yield this.eventsService.updateEventById(_id, event);
+                return this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, updatedEvent);
+            }
+            const result = yield this.imagesController.deleteImages(findEventResult.images);
+            if (!result) {
+                return next((0, http_error_1.createNewError)('update-event', errors_constant_1.ERROR_CONSTANTS.CONFLICT_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.DELETE_CONFLICT_MESSAGE));
+            }
+            const paths = yield this.imagesController.uploadImagesToEvents(req.body, files);
+            const event = Object.assign(Object.assign({}, dto), { images: paths });
+            const updatedEvent = yield this.eventsService.updateEventById(_id, event);
             this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, updatedEvent);
         });
     }
-    delete({ body }, res, next) {
+    delete({ query }, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
-            const deletedEvent = yield this.eventsService.deleteEventById(body._id);
-            if (!deletedEvent) {
-                return next((0, http_error_1.createNewError)('deleteEvent', errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.EVENT_NOT_FOUND_MESSAGE));
+            const id = query._id;
+            const findEventResult = yield this.eventsService.findEventById(id);
+            if (!findEventResult) {
+                return next((0, http_error_1.createNewError)('delete-event', errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.EVENT_NOT_FOUND_MESSAGE));
             }
-            const result = yield this.imagesController.deleteImages(deletedEvent.images);
-            this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, {});
-            if (result) {
-                return this.logger.info('[deleteEvent] Событие и файлы успешно удалены');
+            if (findEventResult.images.length === 0) {
+                yield this.eventsService.deleteEventById(id);
+                return this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, {});
             }
-            this.logger.info('[deleteEvent] Событие удалено, файлы изображений не найдены');
+            const result = yield this.imagesController.deleteImages(findEventResult.images);
+            if (!result) {
+                return next((0, http_error_1.createNewError)('delete-event', errors_constant_1.ERROR_CONSTANTS.CONFLICT_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.DELETE_CONFLICT_MESSAGE));
+            }
+            yield this.eventsService.deleteEventById(id);
+            return this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, {});
         });
     }
 };

@@ -44,30 +44,43 @@ const http_error_1 = require("../errors/http.error");
 const auth_guard_1 = require("../middleware/auth.guard");
 require("reflect-metadata");
 let ExhibitionsController = class ExhibitionsController extends controller_1.Controller {
-    constructor(logger, exhibitionsService) {
+    constructor(logger, exhibitionsService, imagesController) {
         super(logger);
         this.exhibitionsService = exhibitionsService;
+        this.imagesController = imagesController;
         this.routes([
             {
-                path: '/createExhibition',
+                path: '/create-exhibition',
                 method: 'post',
                 func: this.create,
                 validators: [new validator_1.Validator(exhibition_dto_1.ExhibitionDto), new auth_guard_1.AuthGuard()],
             },
             {
-                path: '/searchExhibition',
+                path: '/search-exhibition',
                 method: 'get',
                 func: this.search,
-                validators: [new validator_1.Validator(exhibition_dto_1.ExhibitionDto)],
+                validators: [],
             },
             {
-                path: '/updateExhibition',
+                path: '/search-category',
+                method: 'get',
+                func: this.searchByCategory,
+                validators: [],
+            },
+            {
+                path: '/search-tags',
+                method: 'get',
+                func: this.searchByTags,
+                validators: [],
+            },
+            {
+                path: '/update-exhibition',
                 method: 'patch',
                 func: this.update,
                 validators: [new validator_1.Validator(exhibition_dto_1.ExhibitionDto), new auth_guard_1.AuthGuard()],
             },
             {
-                path: '/deleteExhibition',
+                path: '/delete-exhibition',
                 method: 'delete',
                 func: this.delete,
                 validators: [new auth_guard_1.AuthGuard()],
@@ -77,42 +90,93 @@ let ExhibitionsController = class ExhibitionsController extends controller_1.Con
     create(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             if (req.files === undefined) {
-                return this.send(res, errors_constant_1.ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE, 'Не удалось загрузить изображения');
+                return this.send(res, errors_constant_1.ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.CREATE_IMAGES_ERROR);
             }
             const files = req.files;
-            const result = yield this.exhibitionsService.createExhibition(req.body, files);
+            const findResult = yield this.exhibitionsService.findExhibitionByAlias(req.body.alias);
+            if (findResult) {
+                return this.send(res, errors_constant_1.ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.EXHIBITION_ALREADY_EXIST);
+            }
+            const paths = yield this.imagesController.uploadImagesToExhibitions(req.body, files);
+            const body = Object.assign(Object.assign({}, req.body), { images: paths });
+            const result = yield this.exhibitionsService.createExhibition(body);
             if (!result) {
-                return next((0, http_error_1.createNewError)('createExhibition', errors_constant_1.ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.CREATE_EXHIBITION_ERROR));
+                return next((0, http_error_1.createNewError)('create-exhibition', errors_constant_1.ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.CREATE_EXHIBITION_ERROR));
             }
             this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.CREATED_STATUS_CODE, result);
         });
     }
-    search({ body }, res, next) {
+    search({ query }, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
-            const result = yield this.exhibitionsService.findExhibitionByTitle(body.title);
+            const result = yield this.exhibitionsService.findExhibitionByTitle(query.title);
             if (!result) {
                 return this.send(res, errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_STATUS_CODE, null);
             }
             this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, result);
         });
     }
-    update({ body }, res, next) {
+    searchByCategory({ query }, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { _id } = body, dto = __rest(body, ["_id"]);
-            const updatedExhibition = yield this.exhibitionsService.updateExhibitionById(_id, dto);
-            if (!updatedExhibition) {
-                return next((0, http_error_1.createNewError)('updateExhibition', errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.EXHIBITION_NOT_FOUND_MESSAGE));
+            const result = yield this.exhibitionsService.findExhibitionsByCategory(query.category);
+            if (!result) {
+                return this.send(res, errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_STATUS_CODE, null);
             }
+            this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, result);
+        });
+    }
+    searchByTags({ query }, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const result = yield this.exhibitionsService.findExhibitionsByTags(query.tags);
+            if (!result) {
+                return this.send(res, errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_STATUS_CODE, null);
+            }
+            this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, result);
+        });
+    }
+    update(req, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (req.files === undefined) {
+                return this.send(res, errors_constant_1.ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.CREATE_IMAGES_ERROR);
+            }
+            const files = req.files;
+            const _a = req.body, { _id } = _a, dto = __rest(_a, ["_id"]);
+            const findExhibitionResult = yield this.exhibitionsService.findExhibitionById(_id);
+            if (!findExhibitionResult) {
+                return next((0, http_error_1.createNewError)('update-exhibition', errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.EXHIBITION_NOT_FOUND_MESSAGE));
+            }
+            if (findExhibitionResult.images.length === 0 && files.length !== 0) {
+                const paths = yield this.imagesController.uploadImagesToExhibitions(req.body, files);
+                const exhibition = Object.assign(Object.assign({}, dto), { images: paths });
+                const updatedExhibition = yield this.exhibitionsService.updateExhibitionById(_id, exhibition);
+                return this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, updatedExhibition);
+            }
+            const result = yield this.imagesController.deleteImages(findExhibitionResult.images);
+            if (!result) {
+                return next((0, http_error_1.createNewError)('update-exhibition', errors_constant_1.ERROR_CONSTANTS.CONFLICT_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.DELETE_CONFLICT_MESSAGE));
+            }
+            const paths = yield this.imagesController.uploadImagesToExhibitions(req.body, files);
+            const exhibition = Object.assign(Object.assign({}, dto), { images: paths });
+            const updatedExhibition = yield this.exhibitionsService.updateExhibitionById(_id, exhibition);
             this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, updatedExhibition);
         });
     }
-    delete({ body }, res, next) {
+    delete({ query }, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
-            const deletedExhibition = yield this.exhibitionsService.deleteExhibitionById(body._id);
-            if (!deletedExhibition) {
-                return next((0, http_error_1.createNewError)('deleteExhibition', errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.EXHIBITION_NOT_FOUND_MESSAGE));
+            const id = query._id;
+            const findExhibition = yield this.exhibitionsService.findExhibitionById(id);
+            if (!findExhibition) {
+                return next((0, http_error_1.createNewError)('delete-exhibition', errors_constant_1.ERROR_CONSTANTS.NOT_FOUND_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.EXHIBITION_NOT_FOUND_MESSAGE));
             }
-            this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, {});
+            if (findExhibition.images.length === 0) {
+                yield this.exhibitionsService.deleteExhibitionById(id);
+                return this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, {});
+            }
+            const result = yield this.imagesController.deleteImages(findExhibition.images);
+            if (!result) {
+                return next((0, http_error_1.createNewError)('delete-exhibition', errors_constant_1.ERROR_CONSTANTS.CONFLICT_STATUS_CODE, errors_constant_1.ERROR_CONSTANTS.DELETE_CONFLICT_MESSAGE));
+            }
+            yield this.exhibitionsService.deleteExhibitionById(id);
+            return this.send(res, statuscode_constants_1.COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, {});
         });
     }
 };
@@ -120,6 +184,7 @@ ExhibitionsController = __decorate([
     (0, inversify_1.injectable)(),
     __param(0, (0, inversify_1.inject)(types_1.TYPES.LoggerService)),
     __param(1, (0, inversify_1.inject)(types_1.TYPES.ExhibitionsService)),
-    __metadata("design:paramtypes", [Object, Object])
+    __param(2, (0, inversify_1.inject)(types_1.TYPES.ImagesController)),
+    __metadata("design:paramtypes", [Object, Object, Object])
 ], ExhibitionsController);
 exports.ExhibitionsController = ExhibitionsController;

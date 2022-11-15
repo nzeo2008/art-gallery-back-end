@@ -11,7 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.exhibitionModel = exports.ExhibitionModel = void 0;
 const typegoose_1 = require("@typegoose/typegoose");
-const artist_dto_1 = require("./../artists/artist.dto");
+const artist_model_1 = require("./../artists/artist.model");
 class ExhibitionModel {
 }
 __decorate([
@@ -21,13 +21,17 @@ __decorate([
 __decorate([
     (0, typegoose_1.prop)(),
     __metadata("design:type", Date)
-], ExhibitionModel.prototype, "date", void 0);
+], ExhibitionModel.prototype, "startDate", void 0);
+__decorate([
+    (0, typegoose_1.prop)(),
+    __metadata("design:type", Date)
+], ExhibitionModel.prototype, "endDate", void 0);
 __decorate([
     (0, typegoose_1.prop)(),
     __metadata("design:type", String)
 ], ExhibitionModel.prototype, "city", void 0);
 __decorate([
-    (0, typegoose_1.prop)({ type: () => [artist_dto_1.ArtistDto] }),
+    (0, typegoose_1.prop)({ type: () => [artist_model_1.ArtistModel] }),
     __metadata("design:type", Array)
 ], ExhibitionModel.prototype, "artists", void 0);
 __decorate([

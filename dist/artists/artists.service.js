@@ -26,14 +26,12 @@ const inversify_1 = require("inversify");
 const types_1 = require("./../types");
 require("reflect-metadata");
 let ArtistsService = class ArtistsService {
-    constructor(artistsRepository, imagesController) {
+    constructor(artistsRepository) {
         this.artistsRepository = artistsRepository;
-        this.imagesController = imagesController;
     }
-    createArtist(body, files) {
+    createArtist(body) {
         return __awaiter(this, void 0, void 0, function* () {
-            const paths = yield this.imagesController.uploadImagesToArtists(body, files);
-            return this.artistsRepository.createArtistBody(body, paths);
+            return this.artistsRepository.createArtistBody(body);
         });
     }
     findArtistById(id) {
@@ -44,6 +42,16 @@ let ArtistsService = class ArtistsService {
     findArtistByName(name) {
         return __awaiter(this, void 0, void 0, function* () {
             return this.artistsRepository.findArtistBodyByName(name);
+        });
+    }
+    findArtistsByCategory(category) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.artistsRepository.findArtistsBodyByCategory(category);
+        });
+    }
+    findArtistsByTags(tags) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.artistsRepository.findArtistsBodyByTags(tags);
         });
     }
     updateArtistById(id, dto) {
@@ -60,7 +68,6 @@ let ArtistsService = class ArtistsService {
 ArtistsService = __decorate([
     (0, inversify_1.injectable)(),
     __param(0, (0, inversify_1.inject)(types_1.TYPES.ArtistsRepository)),
-    __param(1, (0, inversify_1.inject)(types_1.TYPES.ImagesController)),
-    __metadata("design:paramtypes", [Object, Object])
+    __metadata("design:paramtypes", [Object])
 ], ArtistsService);
 exports.ArtistsService = ArtistsService;

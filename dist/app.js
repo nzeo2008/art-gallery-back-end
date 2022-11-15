@@ -42,7 +42,7 @@ let App = class App {
         this.artistsController = artistsController;
         this.exhibitionsController = exhibitionsController;
         this.configService = configService;
-        this.port = 3001;
+        this.port = Number(this.configService.get('CONNECTION_PORT')) || 3001;
         this.app = (0, express_1.default)();
         this.logger = logger;
     }
@@ -59,6 +59,7 @@ let App = class App {
         this.app.use('/events', this.eventsController.router.bind(this.eventsController));
         this.app.use('/exhibitions', this.exhibitionsController.router.bind(this.exhibitionsController));
         this.app.use('/artists', this.artistsController.router.bind(this.artistsController));
+        this.app.use('/static', express_1.default.static(__dirname + '/images/images-folder'));
     }
     useExceptionHandler() {
         this.app.use(this.exceptionHandler.catch.bind(this.exceptionHandler));

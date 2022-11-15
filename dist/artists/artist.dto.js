@@ -20,30 +20,40 @@ __decorate([
     __metadata("design:type", String)
 ], ArtistDto.prototype, "name", void 0);
 __decorate([
-    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.ValidateIf)((e) => e.surname !== ''),
     (0, class_validator_1.MaxLength)(30, { message: 'Максимальное число знаков не может быть больше $constraint1' }),
     (0, class_validator_1.MinLength)(2, { message: 'Минимальное число знаков не может быть меньше $constraint1' }),
     (0, class_validator_1.IsString)({ message: 'Неверный тип данных, требуется string' }),
     __metadata("design:type", String)
 ], ArtistDto.prototype, "surname", void 0);
 __decorate([
-    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.ValidateIf)((e) => e.nickname !== ''),
     (0, class_validator_1.MaxLength)(30, { message: 'Максимальное число знаков не может быть больше $constraint1' }),
     (0, class_validator_1.MinLength)(2, { message: 'Минимальное число знаков не может быть меньше $constraint1' }),
     (0, class_validator_1.IsString)({ message: 'Неверный тип данных, требуется string' }),
     __metadata("design:type", String)
 ], ArtistDto.prototype, "nickname", void 0);
 __decorate([
-    (0, class_validator_1.ArrayMaxSize)(30, { message: 'Максимальное число элементов массива не может быть больше $constraint1' }),
-    (0, class_validator_1.ArrayMinSize)(1, { message: 'Минимальное число элементов массива не может быть меньше $constraint1' }),
-    (0, class_validator_1.MaxLength)(30, { each: true, message: 'Максимальное число знаков не может быть больше $constraint1' }),
-    (0, class_validator_1.MinLength)(1, { each: true, message: 'Минимальное число знаков не может быть меньше $constraint1' }),
+    (0, class_validator_1.ArrayMaxSize)(30, {
+        message: 'Максимальное число элементов массива не может быть больше $constraint1',
+    }),
+    (0, class_validator_1.ArrayMinSize)(1, {
+        message: 'Минимальное число элементов массива не может быть меньше $constraint1',
+    }),
+    (0, class_validator_1.MaxLength)(30, {
+        each: true,
+        message: 'Максимальное число знаков не может быть больше $constraint1',
+    }),
+    (0, class_validator_1.MinLength)(1, {
+        each: true,
+        message: 'Минимальное число знаков не может быть меньше $constraint1',
+    }),
     (0, class_validator_1.IsArray)({ message: 'Требуется массив' }),
     (0, class_validator_1.IsString)({ each: true, message: 'Неверный тип данных, требуется string' }),
     __metadata("design:type", Array)
 ], ArtistDto.prototype, "tags", void 0);
 __decorate([
-    (0, class_validator_1.MaxLength)(1024, { message: 'Максимальное число знаков не может быть больше $constraint1' }),
+    (0, class_validator_1.MaxLength)(5024, { message: 'Максимальное число знаков не может быть больше $constraint1' }),
     (0, class_validator_1.MinLength)(30, { message: 'Минимальное число знаков не может быть меньше $constraint1' }),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)

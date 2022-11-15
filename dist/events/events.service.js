@@ -25,18 +25,12 @@ exports.EventsService = void 0;
 const inversify_1 = require("inversify");
 const types_1 = require("./../types");
 let EventsService = class EventsService {
-    constructor(eventsRepository, imagesController) {
+    constructor(eventsRepository) {
         this.eventsRepository = eventsRepository;
-        this.imagesController = imagesController;
     }
-    createEvent(body, files) {
+    createEvent(body) {
         return __awaiter(this, void 0, void 0, function* () {
-            const result = yield this.findEventByAlias(body.alias);
-            const paths = yield this.imagesController.uploadImagesToEvents(body, files);
-            if (!result) {
-                return this.eventsRepository.createEventPost(body, paths);
-            }
-            return null;
+            return this.eventsRepository.createEventPost(body);
         });
     }
     findEventById(id) {
@@ -54,6 +48,11 @@ let EventsService = class EventsService {
             return this.eventsRepository.findEventPostByTitle(title);
         });
     }
+    findEventsByCategory(category) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.eventsRepository.findEventPostsByCategory(category);
+        });
+    }
     updateEventById(id, dto) {
         return __awaiter(this, void 0, void 0, function* () {
             return this.eventsRepository.updateEventPostById(id, dto);
@@ -68,7 +67,6 @@ let EventsService = class EventsService {
 EventsService = __decorate([
     (0, inversify_1.injectable)(),
     __param(0, (0, inversify_1.inject)(types_1.TYPES.EventsRepository)),
-    __param(1, (0, inversify_1.inject)(types_1.TYPES.ImagesController)),
-    __metadata("design:paramtypes", [Object, Object])
+    __metadata("design:paramtypes", [Object])
 ], EventsService);
 exports.EventsService = EventsService;
