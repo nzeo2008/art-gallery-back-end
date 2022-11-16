@@ -64,7 +64,7 @@ export class ExhibitionsController extends Controller implements IExhibitionsCon
 	}
 
 	async create(req: Request, res: Response, next: NextFunction) {
-		if (req.files === undefined) {
+		if (req.files === undefined || req.files.length === 0) {
 			return this.send(
 				res,
 				ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE,
@@ -84,8 +84,16 @@ export class ExhibitionsController extends Controller implements IExhibitionsCon
 			);
 		}
 
-		const paths = await this.imagesController.uploadImagesToExhibitions(req.body, files);
-
+		const paths = await this.imagesController.uploadExhibitionImagesToCloud(req.body, files);
+		if (!paths || paths.length === 0) {
+			return next(
+				createNewError(
+					'create-exhibition',
+					ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE,
+					ERROR_CONSTANTS.CREATE_IMAGES_ERROR,
+				),
+			);
+		}
 		const body = { ...req.body, images: paths };
 
 		const result = await this.exhibitionsService.createExhibition(body);
@@ -134,7 +142,7 @@ export class ExhibitionsController extends Controller implements IExhibitionsCon
 	}
 
 	async update(req: Request, res: Response, next: NextFunction) {
-		if (req.files === undefined) {
+		if (req.files === undefined || req.files.length === 0) {
 			return this.send(
 				res,
 				ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE,
@@ -158,14 +166,9 @@ export class ExhibitionsController extends Controller implements IExhibitionsCon
 			);
 		}
 
-		if (findExhibitionResult.images.length === 0 && files.length !== 0) {
-			const paths = await this.imagesController.uploadImagesToExhibitions(req.body, files);
-			const exhibition = { ...dto, images: paths };
-			const updatedExhibition = await this.exhibitionsService.updateExhibitionById(_id, exhibition);
-			return this.send(res, COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, updatedExhibition);
-		}
-
-		const result = await this.imagesController.deleteImages(findExhibitionResult.images);
+		const result = await this.imagesController.deleteExhibitionImagesFromCloud(
+			findExhibitionResult,
+		);
 
 		if (!result) {
 			return next(
@@ -176,7 +179,7 @@ export class ExhibitionsController extends Controller implements IExhibitionsCon
 				),
 			);
 		}
-		const paths = await this.imagesController.uploadImagesToExhibitions(req.body, files);
+		const paths = await this.imagesController.uploadExhibitionImagesToCloud(req.body, files);
 		const exhibition = { ...dto, images: paths };
 		const updatedExhibition = await this.exhibitionsService.updateExhibitionById(_id, exhibition);
 		this.send(res, COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, updatedExhibition);
@@ -184,9 +187,9 @@ export class ExhibitionsController extends Controller implements IExhibitionsCon
 
 	async delete({ query }: Request, res: Response, next: NextFunction) {
 		const id = query._id as string;
-		const findExhibition = await this.exhibitionsService.findExhibitionById(id);
+		const findExhibitionResult = await this.exhibitionsService.findExhibitionById(id);
 
-		if (!findExhibition) {
+		if (!findExhibitionResult) {
 			return next(
 				createNewError(
 					'delete-exhibition',
@@ -196,12 +199,9 @@ export class ExhibitionsController extends Controller implements IExhibitionsCon
 			);
 		}
 
-		if (findExhibition.images.length === 0) {
-			await this.exhibitionsService.deleteExhibitionById(id);
-			return this.send(res, COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, {});
-		}
-
-		const result = await this.imagesController.deleteImages(findExhibition.images);
+		const result = await this.imagesController.deleteExhibitionImagesFromCloud(
+			findExhibitionResult,
+		);
 
 		if (!result) {
 			return next(
@@ -213,7 +213,18 @@ export class ExhibitionsController extends Controller implements IExhibitionsCon
 			);
 		}
 
-		await this.exhibitionsService.deleteExhibitionById(id);
+		const deletedExhibition = await this.exhibitionsService.deleteExhibitionById(id);
+
+		if (!deletedExhibition) {
+			return next(
+				createNewError(
+					'delete-exhibition',
+					ERROR_CONSTANTS.CONFLICT_STATUS_CODE,
+					ERROR_CONSTANTS.DELETE_CONFLICT_MESSAGE,
+				),
+			);
+		}
+
 		return this.send(res, COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, {});
 	}
 }

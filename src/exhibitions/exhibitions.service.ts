@@ -3,7 +3,6 @@ import { TYPES } from '../types';
 import { ExhibitionDto } from './exhibition.dto';
 import { IExhibitionsRepository } from './exhibitions.repository.interface';
 import { IExhibitionsService } from './exhibitions.service.interface';
-import { IImagesController } from './../images/images-module/images.controller.interface';
 
 @injectable()
 export class ExhibitionsService implements IExhibitionsService {

@@ -2,12 +2,12 @@ import { getModelForClass, prop } from '@typegoose/typegoose';
 
 export class ArtistModel {
 	@prop()
-	name?: string;
+	name: string;
 
-	@prop()
+	@prop({ default: '' })
 	surname?: string;
 
-	@prop()
+	@prop({ default: '' })
 	nickname?: string;
 
 	@prop({ type: () => [String] })

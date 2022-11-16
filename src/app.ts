@@ -14,7 +14,6 @@ import { AuthMiddleware } from './middleware/auth.middleware';
 import { IConfigService } from './config/config.service.interface';
 import cors from 'cors';
 import 'reflect-metadata';
-import { ExhibitionDto } from './exhibitions/exhibition.dto';
 
 @injectable()
 export class App {

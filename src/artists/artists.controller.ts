@@ -63,7 +63,7 @@ export class ArtistsController extends Controller {
 	}
 
 	async create(req: Request, res: Response, next: NextFunction) {
-		if (req.files === undefined) {
+		if (req.files === undefined || req.files.length === 0) {
 			return this.send(
 				res,
 				ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE,
@@ -73,9 +73,19 @@ export class ArtistsController extends Controller {
 
 		const files = req.files as Express.Multer.File[];
 
-		const paths = await this.imagesController.uploadImagesToArtists(req.body, files);
+		const paths = await this.imagesController.uploadArtistImagesToCloud(req.body, files);
 
-		const body = { ...req.body, ...paths };
+		if (!paths) {
+			return next(
+				createNewError(
+					'create-artist',
+					ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE,
+					ERROR_CONSTANTS.CREATE_IMAGES_ERROR,
+				),
+			);
+		}
+
+		const body: ArtistDto = { ...req.body, ...paths };
 
 		const result = await this.artistsService.createArtist(body);
 
@@ -123,7 +133,7 @@ export class ArtistsController extends Controller {
 	}
 
 	async update(req: Request, res: Response, next: NextFunction) {
-		if (req.files === undefined) {
+		if (req.files === undefined || req.files.length === 0) {
 			return this.send(
 				res,
 				ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE,
@@ -147,14 +157,7 @@ export class ArtistsController extends Controller {
 			);
 		}
 
-		if (findArtistResult.images.length === 0 && files.length !== 0) {
-			const paths = await this.imagesController.uploadImagesToArtists(req.body, files);
-			const artist = { ...dto, ...paths };
-			const updatedArtist = await this.artistsService.updateArtistById(_id, artist);
-			return this.send(res, COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, updatedArtist);
-		}
-
-		const result = await this.imagesController.deleteImages(findArtistResult.images);
+		const result = await this.imagesController.deleteArtistImagesFromCloud(findArtistResult);
 
 		if (!result) {
 			return next(
@@ -166,7 +169,7 @@ export class ArtistsController extends Controller {
 			);
 		}
 
-		const paths = await this.imagesController.uploadImagesToArtists(req.body, files);
+		const paths = await this.imagesController.uploadArtistImagesToCloud(req.body, files);
 		const artist = { ...dto, ...paths };
 		const updatedArtist = await this.artistsService.updateArtistById(_id, artist);
 		this.send(res, COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, updatedArtist);
@@ -174,9 +177,9 @@ export class ArtistsController extends Controller {
 
 	async delete({ query }: Request, res: Response, next: NextFunction) {
 		const id = query._id as string;
-		const findArtist = await this.artistsService.findArtistById(id);
+		const findArtistResult = await this.artistsService.findArtistById(id);
 
-		if (!findArtist) {
+		if (!findArtistResult) {
 			return next(
 				createNewError(
 					'delete-artist',
@@ -186,12 +189,7 @@ export class ArtistsController extends Controller {
 			);
 		}
 
-		if (findArtist.images.length === 0) {
-			await this.artistsService.deleteArtistById(id);
-			return this.send(res, COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, {});
-		}
-
-		const result = await this.imagesController.deleteImages(findArtist.images);
+		const result = await this.imagesController.deleteArtistImagesFromCloud(findArtistResult);
 
 		if (!result) {
 			return next(
@@ -203,7 +201,18 @@ export class ArtistsController extends Controller {
 			);
 		}
 
-		await this.artistsService.deleteArtistById(id);
+		const deletedArtist = await this.artistsService.deleteArtistById(id);
+
+		if (!deletedArtist) {
+			return next(
+				createNewError(
+					'delete-event',
+					ERROR_CONSTANTS.CONFLICT_STATUS_CODE,
+					ERROR_CONSTANTS.DELETE_CONFLICT_MESSAGE,
+				),
+			);
+		}
+
 		this.send(res, COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, {});
 	}
 }

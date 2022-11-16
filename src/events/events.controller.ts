@@ -57,7 +57,7 @@ export class EventsController extends Controller {
 	}
 
 	async create(req: Request, res: Response, next: NextFunction) {
-		if (req.files === undefined) {
+		if (req.files === undefined || req.files.length === 0) {
 			return this.send(
 				res,
 				ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE,
@@ -77,8 +77,17 @@ export class EventsController extends Controller {
 			);
 		}
 
-		const paths = await this.imagesController.uploadImagesToEvents(req.body, files);
-		const body = { ...req.body, images: paths };
+		const paths = await this.imagesController.uploadEventImagesToCloud(req.body, files);
+		if (!paths || paths.length === 0) {
+			return next(
+				createNewError(
+					'create-event',
+					ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE,
+					ERROR_CONSTANTS.CREATE_IMAGES_ERROR,
+				),
+			);
+		}
+		const body: EventDto = { ...req.body, images: paths };
 
 		const result = await this.eventsService.createEvent(body);
 
@@ -112,7 +121,7 @@ export class EventsController extends Controller {
 	}
 
 	async update(req: Request, res: Response, next: NextFunction) {
-		if (req.files === undefined) {
+		if (req.files === undefined || req.files.length === 0) {
 			return this.send(
 				res,
 				ERROR_CONSTANTS.COMMON_ERROR_422_STATUS_CODE,
@@ -136,14 +145,7 @@ export class EventsController extends Controller {
 			);
 		}
 
-		if (findEventResult.images.length === 0 && files.length !== 0) {
-			const paths = await this.imagesController.uploadImagesToEvents(req.body, files);
-			const event = { ...dto, images: paths };
-			const updatedEvent = await this.eventsService.updateEventById(_id, event);
-			return this.send(res, COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, updatedEvent);
-		}
-
-		const result = await this.imagesController.deleteImages(findEventResult.images);
+		const result = await this.imagesController.deleteEventImagesFromCloud(findEventResult);
 
 		if (!result) {
 			return next(
@@ -155,7 +157,7 @@ export class EventsController extends Controller {
 			);
 		}
 
-		const paths = await this.imagesController.uploadImagesToEvents(req.body, files);
+		const paths = await this.imagesController.uploadEventImagesToCloud(req.body, files);
 		const event = { ...dto, images: paths };
 		const updatedEvent = await this.eventsService.updateEventById(_id, event);
 		this.send(res, COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, updatedEvent);
@@ -175,12 +177,7 @@ export class EventsController extends Controller {
 			);
 		}
 
-		if (findEventResult.images.length === 0) {
-			await this.eventsService.deleteEventById(id);
-			return this.send(res, COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, {});
-		}
-
-		const result = await this.imagesController.deleteImages(findEventResult.images);
+		const result = await this.imagesController.deleteEventImagesFromCloud(findEventResult);
 
 		if (!result) {
 			return next(
@@ -192,7 +189,18 @@ export class EventsController extends Controller {
 			);
 		}
 
-		await this.eventsService.deleteEventById(id);
-		return this.send(res, COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, {});
+		const deletedEvent = await this.eventsService.deleteEventById(id);
+
+		if (!deletedEvent) {
+			return next(
+				createNewError(
+					'delete-event',
+					ERROR_CONSTANTS.CONFLICT_STATUS_CODE,
+					ERROR_CONSTANTS.DELETE_CONFLICT_MESSAGE,
+				),
+			);
+		}
+
+		this.send(res, COMMON_STATUS_CODES.SUCCESS_STATUS_CODE, {});
 	}
 }
